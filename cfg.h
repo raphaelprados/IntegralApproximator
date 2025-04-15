@@ -10,26 +10,6 @@ bool matchLetter(char item) { return ((item >= 'a' && item <= 'z') || (item >= '
 bool matchSymbols(char item) { return (
     item == '+' || item == '-' || item == '/' || item == '*' || item == '^'); }
 
-void matchOperations(std::string &equation) {
-    std::string operation = "cos";
-    int result = 0;
-    
-    while(result != -1) {
-        result = equation.find(operation);
-        if(result != -1) {
-            equation.replace(result, result + operation.length() - 1, "_");
-        } else {
-            if(operation == "cos") {
-                operation = "sin"; result = 0;
-            } else if(operation == "sin") {
-                operation = "tan"; result = 0;
-            } else if(operation == "tan") {
-                operation = "root"; result = 0;
-            }
-        }
-    }
-}
-
 void C(std::string &equation) {
 
     // C -> Variables and constants
@@ -38,7 +18,7 @@ void C(std::string &equation) {
     while(output != std::string::npos) {
         
         if(output != equation.length()-1 && equation[output+1] == '$')
-            equation.replace(output, output+1, "C");
+            equation.replace(output, 2, "C");
         else
             equation[output] = 'C';
         
@@ -47,7 +27,7 @@ void C(std::string &equation) {
 }
 
 void A(std::string &equation) {
-    std::vector<std::string> A_transformations = {"ABA", "(A)", "cos(A)", "sin(A)", "tan(A)", "root(A, A)"};
+    std::vector<std::string> A_transformations = {"ABA", "(A)", "@A", "@(A,A)"};
     std::size_t result;
     unsigned iteration_counter = 0;
     int foo;
@@ -67,7 +47,6 @@ void A(std::string &equation) {
                 std::cout << equation << "        Op(" << A_transformations[i] << " - " << 
                           result << ", " << A_transformations[i].length() - 1 << ")" << " - It_c = " 
                           << iteration_counter << std::endl;
-                std::cin >> foo;
                 result = equation.find(A_transformations[i]);
                 iteration_counter++;
             }
@@ -75,33 +54,47 @@ void A(std::string &equation) {
     }while(iteration_counter != 0);
 }
 
+void DE(std::string &equation) {
+    std::vector<std::string> reserved_words = {"cos", "sen", "tan", "root"};
+    std::size_t result;
+
+    for(int i = 0; i < reserved_words.size(); i++) {
+        for(int j = 0; j < (equation.length() - reserved_words[i].length()); j++) {
+            result = equation.substr(j).find(reserved_words[i]);
+            if(result != std::string::npos) {
+                equation.replace(result, reserved_words[i].length(), "@");
+                std::cout << equation << std::endl;
+            }
+        }
+    }
+}
+
 bool cfg_checker(std::string equation, bool show_prints = false) {
 
-    std::cout << equation << "\n" << matchLetter('(') << std::endl;    
+
+    std::cout << equation << std::endl;    
+
+    DE(equation);
 
     for(int i = 0; i < equation.length(); i++) {
-        std::cout << (matchDigit(equation[i]));
-        if(matchDigit(equation[i]))
+        if(matchDigit(equation[i])) {
             equation[i] = '$';
+        }
     }
-    std::cout << std::endl << equation << std::endl;
+    std::cout << equation << std::endl;
     for(int i = 0; i < equation.length(); i++) {
-        std::cout << (matchLetter(equation[i]));
         if(matchLetter(equation[i]))
             equation[i] = '&';
     }
-    std::cout << std::endl << equation << std::endl;
+    std::cout << equation << std::endl;
     for(int i = 0; i < equation.length(); i++) {
-        std::cout << (matchSymbols(equation[i]));
         if(matchSymbols(equation[i]))
             equation[i] = 'B';
     }
-    std::cout << std::endl << equation << std::endl;    
+    std::cout << equation << std::endl;    
     
     C(equation);
     A(equation);
-
-    std::cout << equation << std::endl;
 
     return (equation == "A");
 }
