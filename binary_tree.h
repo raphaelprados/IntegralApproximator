@@ -1,17 +1,18 @@
 
 #include <string>
+#include "cfg.h"
 
 typedef struct node {
     char op;
-    float value;
+    char var[2];
     node *left_child = nullptr;
     node *right_child = nullptr;
 
     // Struct constructor
     node() 
-        : op('\0'), value(0.0f), left_child(nullptr), right_child(nullptr) {} 
+        : op('\0'), var(""), left_child(nullptr), right_child(nullptr) {} 
     node(char op, float value)
-        : op(op), value(value), left_child(nullptr), right_child(nullptr) {}
+        : op(op), var(""), left_child(nullptr), right_child(nullptr) {}
 } Node;
 
 class BTree {
@@ -23,14 +24,7 @@ class BTree {
         BTree(std::string equation) {
             unsigned index = 0;
 
-            // Sets the first two child nodes for the most simple equation (such as a+b)
-            pushLeft(&head); pushRight(&head);
-            
-            // Left side of the tree
-            buildNode(head.left_child, equation, &index);
-
-            // Right side of the tree
-            buildNode(head.right_child, equation, &index);
+            buildNode(&head, equation, index);
         }
         
         void pushLeft(Node *current_node) { current_node->left_child = new Node(); }
@@ -39,59 +33,60 @@ class BTree {
         void pushRight(Node *current_node) { current_node->right_child = new Node(); }
         void pushRight(Node *current_node, char op, float value) { current_node->right_child = new Node(op, value); }
         
-        void buildNode(Node *current_node, std::string equation, unsigned *index) {
+        unsigned buildNode(Node *current_node, std::string equation, unsigned i) {
             
+            std::vector<std::string> reserved_words = {"cos", "sin", "tan", "root"};
+            std::size_t result;
+            unsigned return_i_left, return_i_right;
+            bool jump_condition;
+
+            if(i == 0 && current_node == &head) {
+                
+                pushLeft(current_node);
+                result = buildNode(current_node->left_child, equation, i);
+                
+                if(result != equation.size() - 1) {
+                    pushRight(current_node);
+                    buildNode(current_node->right_child, equation, result+1);
+                } else {
+                    head = *head.left_child;
+                }
+
+            } else if(matchLetter(equation[i])) {
+                for(int j = 0; j < reserved_words.size(); j++) {
+                    
+                    result = equation.substr(i).find(reserved_words[j]); 
+                    
+                    if(result != std::string::npos) {
+                        current_node->op = reserved_words[i][0];
+                        pushLeft(current_node);
+                        return buildNode(current_node->left_child, equation, i + 2); // Jumps the '(' character
+                    }
+                }
+                
+                // If there were no substrings operations found
+                jump_condition = (i + 1) < equation.length() && matchDigit(equation[i+1]); 
+                if(result == std::string::npos) {
+                    if(jump_condition) {      // indexed variable (x1, x2, y1, a1, ...)
+                        current_node->var[0] = equation[i];  
+                        current_node->var[1] = equation[i+1];  
+                        return i;
+                    } else { // Non-indexed variable (x, y, a, b, ...)
+                        current_node->var[0] = equation[i];
+                        return i;
+                    }
+                }
+            } else if(matchSymbols(equation[i])) {
+                current_node->op = equation[i];
+                pushRight(current_node);
+                return buildNode(current_node->right_child, equation, i+1);
+            } else {
+                pushLeft(current_node);
+                return_i_left = buildNode(current_node->left_child, equation, i+1);
+                pushRight(current_node);
+                current_node->op = equation[return_i_left + 1];
+                return buildNode(current_node->right_child, equation, return_i_left+2);
+            }
         }
 };
 
-typedef struct map {
-    int position;
-    char *value;
-} Map;
-
-int charType(std::string equation, int index) {
-    /* 
-        0 -> parte de variável 
-        1 -> operadores simples (+, -, *, /)
-        2 -> operadores complexos 1 (^, root())
-        3 -> operadores complexos 2 (sen, cos, tan)
-        4 -> parenteses aberto
-        5 -> parenteses fechado
-    */
-
-    char c = equation[index];
-    std::string aux_string;
-    int i;
-
-    // Checks for variable names
-    if ((c >= '1' && c <= '0') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))  {
-        aux_string += c;                                            // Starts the variable string
-        if(c != 'c' && c != 't' && c != 's' && c != 'e') {
-            return 0;
-        } else {
-            // Checks the next characters to find 'sen', 'cos', 'tan' and 'root' occurences 
-            //    or composite variable names (such as a1, xn, an so on) 
-            while(index < equation.length() && charType(equation, index + 1) == 0) {
-                aux_string += equation[index + 1];                  
-                index += 1;
-            }
-
-            if(aux_string == "sen" || aux_string == "cos" || aux_string == "tan") {
-                return 3;            
-            } else if(aux_string == "exp") {
-                return 2;
-            } else {
-                return 0;
-            }
-
-        }
-    } else if(c == '+' || c == '-' || c == '*' || c == '/') {
-        return 1;
-    } else if(c == '^') {
-        return 2;
-    } else if(c == '(') {
-        return 4;
-    } else if(c == ')') {
-        return 5;
-    }
-}

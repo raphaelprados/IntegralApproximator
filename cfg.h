@@ -55,7 +55,7 @@ void A(std::string &equation) {
 }
 
 void DE(std::string &equation) {
-    std::vector<std::string> reserved_words = {"cos", "sen", "tan", "root"};
+    std::vector<std::string> reserved_words = {"cos", "sin", "tan", "root"};
     std::size_t result;
 
     for(int i = 0; i < reserved_words.size(); i++) {
