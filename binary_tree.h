@@ -1,6 +1,7 @@
 
 #include <string>
 #include <vector>
+#include <stack>
 #include <iostream>
 #include "utils.h"
 
@@ -99,4 +100,25 @@ class BTree {
         }
 
         void printTree() { printNode(&head, 0); }
+
+        std::stack<SNode> TreeToStack() {
+            std::stack<SNode> exec_stack;
+
+            postOrder(&head, exec_stack);
+
+            return exec_stack;
+        }
+
+        void postOrder(Node *curr_node, std::stack<SNode> &exec_stack) {
+            SNode snode;            
+
+            if(curr_node->left_child != nullptr) 
+                postOrder(curr_node->left_child, exec_stack);
+            if(curr_node->right_child != nullptr) 
+                postOrder(curr_node->right_child, exec_stack);
+            
+            snode.op = curr_node->op; 
+            snode.var[0] = curr_node->var[0]; snode.var[1] = curr_node->var[1];
+            exec_stack.push(snode);
+        }
 };
