@@ -2,13 +2,7 @@
 #include <string>
 #include <iostream>
 #include <vector>
-
-bool matchDigit(char item) { return (item >= '0' && item <='9'); }
-
-bool matchLetter(char item) { return ((item >= 'a' && item <= 'z') || (item >= 'A' && item <= 'Z')); }
-
-bool matchSymbols(char item) { return (
-    item == '+' || item == '-' || item == '/' || item == '*' || item == '^'); }
+#include "utils.h"
 
 void C(std::string &equation) {
 
